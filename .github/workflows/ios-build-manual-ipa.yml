@@ -1,4 +1,4 @@
-name: iOS Build IPA
+name: iOS Build Manual IPA
 
 on:
   push:
@@ -50,35 +50,25 @@ jobs:
                    DEVELOPMENT_TEAM="" \
                    PROVISIONING_PROFILE=""
                    
-    - name: Create IPA without signing
+    - name: Create IPA manually
       run: |
         cd ios
+        echo "Creating IPA manually..."
         
-        # Method 1: Try xcodebuild export first
-        echo "Trying xcodebuild export..."
-        xcodebuild -exportArchive \
-          -archivePath SafeDealApp.xcarchive \
-          -exportPath ./export \
-          -exportOptionsPlist exportOptionsNoSigning.plist \
-          CODE_SIGN_IDENTITY="" \
-          CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGNING_ALLOWED=NO \
-          DEVELOPMENT_TEAM="" \
-          PROVISIONING_PROFILE="" || {
-            echo "xcodebuild export failed, trying manual IPA creation..."
-            
-            # Method 2: Manual IPA creation
-            mkdir -p Payload/SafeDealApp.app
-            cp -r SafeDealApp.xcarchive/Products/Applications/SafeDealApp.app/* Payload/SafeDealApp.app/
-            zip -r SafeDealApp.ipa Payload/
-          }
+        # Create Payload directory structure
+        mkdir -p Payload/SafeDealApp.app
         
-        # If xcodebuild succeeded, copy the IPA
-        if [ -f "./export/SafeDealApp.ipa" ]; then
-          cp ./export/SafeDealApp.ipa SafeDealApp.ipa
-        fi
+        # Copy app bundle from archive
+        cp -r SafeDealApp.xcarchive/Products/Applications/SafeDealApp.app/* Payload/SafeDealApp.app/
         
-        echo "IPA creation completed!"
+        # Create IPA file
+        zip -r SafeDealApp.ipa Payload/
+        
+        # Verify IPA was created
+        ls -la SafeDealApp.ipa
+        echo "IPA size: $(du -h SafeDealApp.ipa | cut -f1)"
+        
+        echo "✅ IPA created successfully!"
                    
     - name: Upload IPA
       uses: actions/upload-artifact@v4
@@ -99,10 +89,10 @@ jobs:
         echo "## 🎉 iOS Build Complete!" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 📱 Files Created:" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ **SafeDealApp.ipa** - iOS App Package" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ **SafeDealApp.ipa** - iOS App Package (Manual)" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ **SafeDealApp.xcarchive** - Xcode Archive" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 📋 How to use:" >> $GITHUB_STEP_SUMMARY
         echo "1. Download the IPA file" >> $GITHUB_STEP_SUMMARY
-        echo "2. Install on iOS device via iTunes/Xcode" >> $GITHUB_STEP_SUMMARY
-        echo "3. Or use AltStore for sideloading" >> $GITHUB_STEP_SUMMARY 
+        echo "2. Install on iOS device via AltStore" >> $GITHUB_STEP_SUMMARY
+        echo "3. Or use Xcode for development installation" >> $GITHUB_STEP_SUMMARY 
