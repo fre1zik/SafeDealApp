@@ -44,10 +44,6 @@ jobs:
         
     - name: Build iOS app
       run: |
-        npx react-native run-ios --configuration Release --simulator="iPhone 14"
-        
-    - name: Archive iOS app
-      run: |
         cd ios
         xcodebuild -workspace SafeDealApp.xcworkspace \
                    -scheme SafeDealApp \
