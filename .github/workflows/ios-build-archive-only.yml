@@ -1,0 +1,71 @@
+name: iOS Build (Archive Only)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        npm ci
+        
+    - name: Setup Ruby 3.2
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        
+    - name: Install CocoaPods
+      run: |
+        gem install cocoapods
+        cd ios && pod install && cd ..
+        
+    - name: Build iOS Archive
+      run: |
+        cd ios
+        xcodebuild -workspace SafeDealApp.xcworkspace \
+                   -scheme SafeDealApp \
+                   -configuration Debug \
+                   -destination generic/platform=iOS \
+                   -archivePath SafeDealApp.xcarchive \
+                   archive \
+                   CODE_SIGN_IDENTITY="" \
+                   CODE_SIGNING_REQUIRED=NO \
+                   CODE_SIGNING_ALLOWED=NO \
+                   DEVELOPMENT_TEAM="" \
+                   PROVISIONING_PROFILE=""
+                   
+    - name: Upload Archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: SafeDealApp-iOS-Archive
+        path: ios/SafeDealApp.xcarchive
+        retention-days: 30
+        
+    - name: Create Build Info
+      run: |
+        echo "## iOS Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Archive created successfully" >> $GITHUB_STEP_SUMMARY
+        echo "- 📱 Platform: iOS" >> $GITHUB_STEP_SUMMARY
+        echo "- 🏗️ Configuration: Debug" >> $GITHUB_STEP_SUMMARY
+        echo "- 📦 Artifact: SafeDealApp.xcarchive" >> $GITHUB_STEP_SUMMARY
+        echo "- 📋 Next steps:" >> $GITHUB_STEP_SUMMARY
+        echo "  1. Download the archive" >> $GITHUB_STEP_SUMMARY
+        echo "  2. Open in Xcode" >> $GITHUB_STEP_SUMMARY
+        echo "  3. Archive → Distribute App" >> $GITHUB_STEP_SUMMARY
+        echo "  4. Choose 'Development' or 'Ad Hoc'" >> $GITHUB_STEP_SUMMARY 
