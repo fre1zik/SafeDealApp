@@ -1,0 +1,84 @@
+name: iOS Build (No Signing)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        npm ci
+        
+    - name: Setup Ruby 3.2
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        
+    - name: Install CocoaPods
+      run: |
+        gem install cocoapods
+        cd ios && pod install && cd ..
+        
+    - name: Build iOS app (Development)
+      run: |
+        cd ios
+        xcodebuild -workspace SafeDealApp.xcworkspace \
+                   -scheme SafeDealApp \
+                   -configuration Debug \
+                   -destination generic/platform=iOS \
+                   -archivePath SafeDealApp.xcarchive \
+                   archive \
+                   CODE_SIGN_IDENTITY="" \
+                   CODE_SIGNING_REQUIRED=NO \
+                   CODE_SIGNING_ALLOWED=NO \
+                   DEVELOPMENT_TEAM="" \
+                   PROVISIONING_PROFILE=""
+                   
+    - name: Create Development IPA
+      run: |
+        cd ios
+        xcodebuild -exportArchive \
+                   -archivePath SafeDealApp.xcarchive \
+                   -exportPath ./build \
+                   -exportOptionsPlist exportOptions.plist \
+                   -allowProvisioningUpdates \
+                   -allowProvisioningDeviceRegistration
+                   
+    - name: Upload IPA artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: SafeDealApp-iOS-Development
+        path: ios/build/SafeDealApp.ipa
+        retention-days: 30
+        
+    - name: Upload Archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: SafeDealApp-Archive
+        path: ios/SafeDealApp.xcarchive
+        retention-days: 30
+        
+    - name: Build summary
+      run: |
+        echo "## iOS Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Build completed successfully" >> $GITHUB_STEP_SUMMARY
+        echo "- 📱 Platform: iOS" >> $GITHUB_STEP_SUMMARY
+        echo "- 🏗️ Configuration: Debug (Development)" >> $GITHUB_STEP_SUMMARY
+        echo "- 📦 Artifacts: SafeDealApp.ipa + Archive" >> $GITHUB_STEP_SUMMARY
+        echo "- ⚠️ Note: No code signing (for testing only)" >> $GITHUB_STEP_SUMMARY 

@@ -5,12 +5,37 @@
     <key>method</key>
     <string>development</string>
     <key>teamID</key>
-    <string>YOUR_TEAM_ID</string>
+    <string></string>
+    <key>signingStyle</key>
+    <string>manual</string>
+    <key>stripSwiftSymbols</key>
+    <true/>
     <key>uploadBitcode</key>
     <false/>
     <key>uploadSymbols</key>
     <false/>
     <key>compileBitcode</key>
     <false/>
+    <key>thinning</key>
+    <string>&lt;none&gt;</string>
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>org.reactjs.native.example.SafeDealApp</key>
+        <string></string>
+    </dict>
+    <key>signingCertificate</key>
+    <string></string>
+    <key>signingStyle</key>
+    <string>automatic</string>
+    <key>stripSwiftSymbols</key>
+    <true/>
+    <key>uploadBitcode</key>
+    <false/>
+    <key>uploadSymbols</key>
+    <false/>
+    <key>compileBitcode</key>
+    <false/>
+    <key>thinning</key>
+    <string>&lt;none&gt;</string>
 </dict>
 </plist> 
