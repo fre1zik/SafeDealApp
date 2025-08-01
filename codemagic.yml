@@ -1,0 +1,46 @@
+workflows:
+  ios-workflow:
+    name: iOS Workflow
+    environment:
+      vars:
+        XCODE_PROJECT: "ios/SafeDealApp.xcodeproj"
+        XCODE_SCHEME: "SafeDealApp"
+        BUNDLE_ID: "com.safedeal.app"
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Set up code signing settings
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "com.safedeal.app" --type IOS_APP_STORE --create
+          xcode-project use-profiles
+      - name: Install dependencies
+        script: |
+          npm install
+      - name: Install iOS dependencies
+        script: |
+          cd ios && pod install
+      - name: Build iOS app
+        script: |
+          xcodebuild build -project ios/SafeDealApp.xcodeproj \
+                           -scheme SafeDealApp \
+                           -configuration Release \
+                           -destination generic/platform=iOS \
+                           -archivePath SafeDealApp.xcarchive \
+                           archive
+      - name: Build IPA
+        script: |
+          xcodebuild -exportArchive \
+                     -archivePath SafeDealApp.xcarchive \
+                     -exportPath ./build \
+                     -exportOptionsPlist exportOptions.plist
+    artifacts:
+      - build/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true 
